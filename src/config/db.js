@@ -18,7 +18,7 @@ const sequelize = new Sequelize(
       rejectUnauthorized: false,
     },
     connectTimeout: 20000,
-      timezone: process.env.DB_TIMEZONE || "+05:30"
+    timezone: process.env.DB_TIMEZONE || "+05:30"
     },
     logging: false
   }
