@@ -6,6 +6,10 @@ import cron from "node-cron";
 import "./models/User.js";
 import "./models/PendingUser.js";
 import "./models/DailyVehicleStat.js";
+import "./models/GlobalDailyStat.js";
+import "./models/WeeklyStat.js";
+import "./models/MonthlyStat.js";
+import "./models/YearlyStat.js";
 
 dotenv.config();
 
