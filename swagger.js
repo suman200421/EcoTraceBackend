@@ -34,7 +34,7 @@ const options = {
                 description: "Local server"
             },
             {
-                url: "<your live url here>",
+                url: "https://ecotracebackend-pjo2.onrender.com",
                 description: "Live server"
             },
         ]
