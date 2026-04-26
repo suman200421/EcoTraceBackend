@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear } from '../controllers/analytics.controller.js';
+import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear, getStateStatsAllTime } from '../controllers/analytics.controller.js';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const router = express.Router();
@@ -394,5 +394,19 @@ router.get("/public/stats/state/this-month", getStateStatsThisMonth);
  *         description: Successfully retrieved this year's state stats
  */
 router.get("/public/stats/state/this-year", getStateStatsThisYear);
+
+/**
+ * @swagger
+ * /api/public/stats/state/all-time:
+ *   get:
+ *     summary: Get state-level stats for all time
+ *     description: Returns aggregated distance and carbon data grouped by state across all time (all previous years).
+ *     tags:
+ *       - Public Stats (State Level)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved all-time state stats
+ */
+router.get("/public/stats/state/all-time", getStateStatsAllTime);
 
 export default router;

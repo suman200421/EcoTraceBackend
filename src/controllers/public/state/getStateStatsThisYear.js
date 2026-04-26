@@ -4,8 +4,7 @@ import { toNumber, roundNumber } from "../../stats/helpers.js";
 
 export const getStateStatsThisYear = async (req, res) => {
   try {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const currentYear = extractYear(todayStr);
+    const currentYear = new Date().getFullYear();
 
     const rows = await sequelize.query(
       `
@@ -17,9 +16,9 @@ export const getStateStatsThisYear = async (req, res) => {
       WHERE year = :year
       ORDER BY total_carbon_kg DESC
       `,
-      {
+      { 
         replacements: { year: currentYear },
-        type: QueryTypes.SELECT
+        type: QueryTypes.SELECT 
       }
     );
 

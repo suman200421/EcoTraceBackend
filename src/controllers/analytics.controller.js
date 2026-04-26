@@ -7,3 +7,4 @@ export { getStateStatsToday } from "./public/state/getStateStatsToday.js";
 export { getStateStatsThisWeek } from "./public/state/getStateStatsThisWeek.js";
 export { getStateStatsThisMonth } from "./public/state/getStateStatsThisMonth.js";
 export { getStateStatsThisYear } from "./public/state/getStateStatsThisYear.js";
+export { getStateStatsAllTime } from "./public/state/getStateStatsAllTime.js";

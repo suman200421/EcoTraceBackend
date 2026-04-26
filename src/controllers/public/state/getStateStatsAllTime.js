@@ -2,25 +2,19 @@ import { QueryTypes } from "sequelize";
 import sequelize from "../../../config/db.js";
 import { toNumber, roundNumber } from "../../stats/helpers.js";
 
-export const getStateStatsThisMonth = async (req, res) => {
+export const getStateStatsAllTime = async (req, res) => {
   try {
-    const todayStr = new Date().toISOString().split('T')[0];
-    const currentMonth = todayStr.substring(0, 7);
-
     const rows = await sequelize.query(
       `
       SELECT
         state,
-        total_distance_km as distance_km,
-        total_carbon_kg as carbon_kg
-      FROM monthly_stats_by_state
-      WHERE month = :month
-      ORDER BY total_carbon_kg DESC
+        SUM(total_distance_km) as distance_km,
+        SUM(total_carbon_kg) as carbon_kg
+      FROM yearly_stats_by_state
+      GROUP BY state
+      ORDER BY carbon_kg DESC
       `,
-      { 
-        replacements: { month: currentMonth },
-        type: QueryTypes.SELECT 
-      }
+      { type: QueryTypes.SELECT }
     );
 
     const formatted = rows.map((row) => ({
@@ -30,11 +24,11 @@ export const getStateStatsThisMonth = async (req, res) => {
     }));
 
     res.json({
-      range: "this-month",
+      range: "all-time",
       data: formatted
     });
   } catch (err) {
-    console.error("State stats this month error:", err);
+    console.error("State stats all-time error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };
