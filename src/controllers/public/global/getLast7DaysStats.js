@@ -1,6 +1,9 @@
+// import { QueryTypes } from "sequelize";
+// import sequelize from "../../config/db.js";
+// import { toNumber, roundNumber } from "../stats/helpers.js";
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { toNumber, roundNumber } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
 export const getLast7DaysStats = async (req, res) => {
   try {

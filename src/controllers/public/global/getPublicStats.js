@@ -1,6 +1,6 @@
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { VALID_RANGES, toNumber, roundNumber } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
 export const getPublicStats = async (req, res) => {
   try {
@@ -12,7 +12,7 @@ export const getPublicStats = async (req, res) => {
 
     let rows = [];
 
-    
+
     if (range === "daily") {
       rows = await sequelize.query(
         `

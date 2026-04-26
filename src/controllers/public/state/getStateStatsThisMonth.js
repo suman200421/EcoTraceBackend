@@ -1,11 +1,11 @@
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { toNumber, extractYear } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
-export const getStateStatsThisYear = async (req, res) => {
+export const getStateStatsThisMonth = async (req, res) => {
   try {
     const todayStr = new Date().toISOString().split('T')[0];
-    const currentYear = extractYear(todayStr);
+    const currentMonth = formatMonth(todayStr);
 
     const rows = await sequelize.query(
       `
@@ -13,13 +13,13 @@ export const getStateStatsThisYear = async (req, res) => {
         state,
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
-      FROM yearly_stats_by_state
-      WHERE year = :year
+      FROM monthly_stats_by_state
+      WHERE month = :month
       ORDER BY total_carbon_kg DESC
       `,
-      { 
-        replacements: { year: currentYear },
-        type: QueryTypes.SELECT 
+      {
+        replacements: { month: currentMonth },
+        type: QueryTypes.SELECT
       }
     );
 
@@ -30,11 +30,11 @@ export const getStateStatsThisYear = async (req, res) => {
     }));
 
     res.json({
-      range: "this-year",
+      range: "this-month",
       data: formatted
     });
   } catch (err) {
-    console.error("State stats this year error:", err);
+    console.error("State stats this month error:", err);
     res.status(500).json({ message: "Server error" });
   }
 };

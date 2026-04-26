@@ -1,6 +1,6 @@
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { toNumber, roundNumber } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
 // helper → get Monday of a given date
 function getWeekStart(date) {

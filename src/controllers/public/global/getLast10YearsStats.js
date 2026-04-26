@@ -1,39 +1,37 @@
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { toNumber, roundNumber } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
-export const getLast12MonthsStats = async (req, res) => {
+export const getLast10YearsStats = async (req, res) => {
     try {
         const rows = await sequelize.query(
             `
       SELECT
-        month as label,
+        year as label,
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
-      FROM monthly_stats
-      WHERE month >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 11 MONTH), '%Y-%m')
-      ORDER BY month ASC
+      FROM yearly_stats
+      WHERE year >= YEAR(CURDATE()) - 9
+      ORDER BY year ASC
       `,
             { type: QueryTypes.SELECT }
         );
 
-        // 🔥 Fill missing months
-        const resultMap = new Map(rows.map(r => [r.label, r]));
+        // 🔥 Fill missing years
+        const resultMap = new Map(rows.map(r => [String(r.label), r]));
 
         const formatted = [];
 
-        for (let i = 11; i >= 0; i--) {
-            const d = new Date();
-            d.setMonth(d.getMonth() - i);
+        const currentYear = new Date().getFullYear();
 
-            const year = d.getFullYear();
-            const month = String(d.getMonth() + 1).padStart(2, "0");
-            const monthStr = `${year}-${month}`;
+        for (let i = 9; i >= 0; i--) {
+            const year = currentYear - i;
+            const yearStr = String(year);
 
-            const row = resultMap.get(monthStr);
+            const row = resultMap.get(yearStr);
 
             formatted.push({
-                label: monthStr,
+                label: yearStr,
                 distance_km: toNumber(row?.distance_km),
                 carbon_kg: toNumber(row?.carbon_kg)
             });
@@ -43,7 +41,7 @@ export const getLast12MonthsStats = async (req, res) => {
         const totalCarbon = formatted.reduce((sum, r) => sum + r.carbon_kg, 0);
 
         res.json({
-            range: "last_12_months",
+            range: "last_10_years",
             total: {
                 distance_km: roundNumber(totalDistance),
                 carbon_kg: roundNumber(totalCarbon)
@@ -52,7 +50,7 @@ export const getLast12MonthsStats = async (req, res) => {
         });
 
     } catch (err) {
-        console.error("Last 12 months error:", err);
+        console.error("Last 10 years error:", err);
         res.status(500).json({ message: "Server error" });
     }
 };

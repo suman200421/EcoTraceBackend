@@ -1,6 +1,6 @@
 import { QueryTypes } from "sequelize";
-import sequelize from "../../config/db.js";
-import { toNumber, getWeekStart } from "../stats/helpers.js";
+import sequelize from "../../../config/db.js";
+import { toNumber, roundNumber } from "../../stats/helpers.js";
 
 export const getStateStatsThisWeek = async (req, res) => {
   try {
@@ -17,9 +17,9 @@ export const getStateStatsThisWeek = async (req, res) => {
       WHERE week_start = :weekStart
       ORDER BY total_carbon_kg DESC
       `,
-      { 
+      {
         replacements: { weekStart: currentWeekStart },
-        type: QueryTypes.SELECT 
+        type: QueryTypes.SELECT
       }
     );
 
