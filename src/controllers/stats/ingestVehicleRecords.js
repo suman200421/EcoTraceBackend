@@ -65,10 +65,25 @@ export const ingestVehicleRecords = async (req, res) => {
       );
       const existingDates = new Set(existingDatesQuery.map((r) => r.date));
 
+      const existingDateStatesQuery = await sequelize.query(
+        `SELECT DISTINCT date, state FROM daily_vehicle_stats WHERE user_id = :userId AND date IN (:dates)`,
+        {
+          replacements: { userId: req.userId, dates: uniqueDates },
+          type: QueryTypes.SELECT,
+          transaction
+        }
+      );
+      const existingDateStates = new Set(existingDateStatesQuery.map((r) => `${r.date}_${r.state}`));
+
       const dailyDeltas = new Map();
       const weeklyDeltas = new Map();
       const monthlyDeltas = new Map();
       const yearlyDeltas = new Map();
+
+      const dailyStateDeltas = new Map();
+      const weeklyStateDeltas = new Map();
+      const monthlyStateDeltas = new Map();
+      const yearlyStateDeltas = new Map();
 
       for (const row of groupedValues) {
         if (!dailyDeltas.has(row.date)) {
@@ -105,6 +120,44 @@ export const ingestVehicleRecords = async (req, res) => {
         const yearly = yearlyDeltas.get(year);
         yearly.distanceKm += row.distanceKm;
         yearly.carbonKg += row.carbonKg;
+
+        const stateKey = `${row.date}_${row.state}`;
+        if (!dailyStateDeltas.has(stateKey)) {
+          dailyStateDeltas.set(stateKey, {
+            date: row.date,
+            state: row.state,
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingDateStates.has(stateKey) ? 0 : 1
+          });
+        }
+        const dailyState = dailyStateDeltas.get(stateKey);
+        dailyState.distanceKm += row.distanceKm;
+        dailyState.carbonKg += row.carbonKg;
+
+        const weekStateKey = `${weekStart}_${row.state}`;
+        if (!weeklyStateDeltas.has(weekStateKey)) {
+          weeklyStateDeltas.set(weekStateKey, { weekStart, state: row.state, distanceKm: 0, carbonKg: 0 });
+        }
+        const weeklyState = weeklyStateDeltas.get(weekStateKey);
+        weeklyState.distanceKm += row.distanceKm;
+        weeklyState.carbonKg += row.carbonKg;
+
+        const monthStateKey = `${month}_${row.state}`;
+        if (!monthlyStateDeltas.has(monthStateKey)) {
+          monthlyStateDeltas.set(monthStateKey, { month, state: row.state, distanceKm: 0, carbonKg: 0 });
+        }
+        const monthlyState = monthlyStateDeltas.get(monthStateKey);
+        monthlyState.distanceKm += row.distanceKm;
+        monthlyState.carbonKg += row.carbonKg;
+
+        const yearStateKey = `${year}_${row.state}`;
+        if (!yearlyStateDeltas.has(yearStateKey)) {
+          yearlyStateDeltas.set(yearStateKey, { year, state: row.state, distanceKm: 0, carbonKg: 0 });
+        }
+        const yearlyState = yearlyStateDeltas.get(yearStateKey);
+        yearlyState.distanceKm += row.distanceKm;
+        yearlyState.carbonKg += row.carbonKg;
       }
 
       await sequelize.query(
@@ -207,6 +260,91 @@ export const ingestVehicleRecords = async (req, res) => {
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
           `,
           { replacements: yearlyReplacements, transaction }
+        );
+      }
+
+      if (dailyStateDeltas.size > 0) {
+        const dailyStateReplacements = [];
+        const dailyStatePlaceholders = Array.from(dailyStateDeltas.values())
+          .map((data) => {
+            dailyStateReplacements.push(data.date, data.state, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO global_daily_stats_by_state (date, state, total_distance_km, total_carbon_kg, user_count)
+            VALUES ${dailyStatePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
+          `,
+          { replacements: dailyStateReplacements, transaction }
+        );
+      }
+
+      if (weeklyStateDeltas.size > 0) {
+        const weeklyStateReplacements = [];
+        const weeklyStatePlaceholders = Array.from(weeklyStateDeltas.values())
+          .map((data) => {
+            weeklyStateReplacements.push(data.weekStart, data.state, data.distanceKm, data.carbonKg);
+            return "(?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO weekly_stats_by_state (week_start, state, total_distance_km, total_carbon_kg)
+            VALUES ${weeklyStatePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+          `,
+          { replacements: weeklyStateReplacements, transaction }
+        );
+      }
+
+      if (monthlyStateDeltas.size > 0) {
+        const monthlyStateReplacements = [];
+        const monthlyStatePlaceholders = Array.from(monthlyStateDeltas.values())
+          .map((data) => {
+            monthlyStateReplacements.push(data.month, data.state, data.distanceKm, data.carbonKg);
+            return "(?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO monthly_stats_by_state (month, state, total_distance_km, total_carbon_kg)
+            VALUES ${monthlyStatePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+          `,
+          { replacements: monthlyStateReplacements, transaction }
+        );
+      }
+
+      if (yearlyStateDeltas.size > 0) {
+        const yearlyStateReplacements = [];
+        const yearlyStatePlaceholders = Array.from(yearlyStateDeltas.values())
+          .map((data) => {
+            yearlyStateReplacements.push(data.year, data.state, data.distanceKm, data.carbonKg);
+            return "(?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO yearly_stats_by_state (year, state, total_distance_km, total_carbon_kg)
+            VALUES ${yearlyStatePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+          `,
+          { replacements: yearlyStateReplacements, transaction }
         );
       }
     });

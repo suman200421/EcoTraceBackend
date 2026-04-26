@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPublicStats, getLast7DaysStats } from '../controllers/analytics.controller.js';
+import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear } from '../controllers/analytics.controller.js';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const router = express.Router();
@@ -141,5 +141,258 @@ router.get('/public/stats', getPublicStats);
  *                   type: string
  *                   example: Server error
  */
-router.get('/public/stats/last-7-days',getLast7DaysStats);
+router.get('/public/stats/last-7-days', getLast7DaysStats);
+
+
+/**
+ * @swagger
+ * /api/public/stats/last-12-months:
+ *   get:
+ *     summary: Get last 12 months carbon emission trend
+ *     description: Returns monthly carbon emission and distance for the last 12 calendar months (e.g., if it's April 2026, it returns April 2025 to March 2026).
+ *     tags:
+ *       - Public Stats
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 12 months data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 range:
+ *                   type: string
+ *                   example: last_12_months
+ *                 total:
+ *                   type: object
+ *                   properties:
+ *                     distance_km:
+ *                       type: number
+ *                       example: 48000.5
+ *                     carbon_kg:
+ *                       type: number
+ *                       example: 3800.25
+ *                 data:
+ *                   type: array
+ *                   description: Always contains exactly 12 months
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                         example: 2025-05
+ *                         description: Year-Month (YYYY-MM)
+ *                       distance_km:
+ *                         type: number
+ *                         example: 3800.5
+ *                       carbon_kg:
+ *                         type: number
+ *                         example: 300.2
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Server error
+ */
+router.get("/public/stats/last-12-months", getLast12MonthsStats);
+
+
+/**
+ * @swagger
+ * /api/public/stats/last-10-years:
+ *   get:
+ *     summary: Get last 10 years carbon emission trend
+ *     description: Returns yearly carbon emission and distance for the last 10 calendar years.
+ *     tags:
+ *       - Public Stats
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 10 years data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 range:
+ *                   type: string
+ *                   example: last_10_years
+ *                 total:
+ *                   type: object
+ *                   properties:
+ *                     distance_km:
+ *                       type: number
+ *                       example: 48000.5
+ *                     carbon_kg:
+ *                       type: number
+ *                       example: 3800.25
+ *                 data:
+ *                   type: array
+ *                   description: Always contains exactly 10 years
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                         example: 2025
+ *                         description: Year (YYYY)
+ *                       distance_km:
+ *                         type: number
+ *                         example: 3800.5
+ *                       carbon_kg:
+ *                         type: number
+ *                         example: 300.2
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Server error
+ */
+router.get("/public/stats/last-10-years", getLast10YearsStats);
+
+
+/**
+ * @swagger
+ * /api/public/stats/last-7-weeks:
+ *   get:
+ *     summary: Get last 7 weeks carbon emission time series
+ *     description: Returns weekly carbon emission and distance for the last 7 weeks (ending on the most recent Sunday).
+ *     tags:
+ *       - Public Stats
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 7 weeks data
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 range:
+ *                   type: string
+ *                   example: last_7_weeks
+ *                 total:
+ *                   type: object
+ *                   properties:
+ *                     distance_km:
+ *                       type: number
+ *                       example: 5400.75
+ *                     carbon_kg:
+ *                       type: number
+ *                       example: 420.5
+ *                 data:
+ *                   type: array
+ *                   description: Always contains exactly 7 weeks
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       label:
+ *                         type: string
+ *                         example: 2026-04-20
+ *                         description: Week start date (YYYY-MM-DD)
+ *                       distance_km:
+ *                         type: number
+ *                         example: 800.5
+ *                       carbon_kg:
+ *                         type: number
+ *                         example: 60.2
+ *       500:
+ *         description: Server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Server error
+ */
+router.get("/public/stats/last-7-weeks", getLast7WeeksStats);
+
+/**
+ * @swagger
+ * /api/public/stats/state/today:
+ *   get:
+ *     summary: Get state-level stats for today
+ *     description: Returns aggregated distance and carbon data grouped by state for the current day.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved today's state stats
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 range:
+ *                   type: string
+ *                   example: today
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       state:
+ *                         type: string
+ *                         example: Maharashtra
+ *                       distance_km:
+ *                         type: number
+ *                         example: 120.5
+ *                       carbon_kg:
+ *                         type: number
+ *                         example: 15.2
+ */
+router.get("/public/stats/state/today", getStateStatsToday);
+
+/**
+ * @swagger
+ * /api/public/stats/state/this-week:
+ *   get:
+ *     summary: Get state-level stats for this week
+ *     description: Returns aggregated distance and carbon data grouped by state for the current week (starting Monday).
+ *     tags:
+ *       - Public Stats (State Level)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved this week's state stats
+ */
+router.get("/public/stats/state/this-week", getStateStatsThisWeek);
+
+/**
+ * @swagger
+ * /api/public/stats/state/this-month:
+ *   get:
+ *     summary: Get state-level stats for this month
+ *     description: Returns aggregated distance and carbon data grouped by state for the current calendar month.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved this month's state stats
+ */
+router.get("/public/stats/state/this-month", getStateStatsThisMonth);
+
+/**
+ * @swagger
+ * /api/public/stats/state/this-year:
+ *   get:
+ *     summary: Get state-level stats for this year
+ *     description: Returns aggregated distance and carbon data grouped by state for the current calendar year.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved this year's state stats
+ */
+router.get("/public/stats/state/this-year", getStateStatsThisYear);
+
 export default router;

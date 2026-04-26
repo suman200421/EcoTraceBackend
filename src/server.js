@@ -10,6 +10,10 @@ import "./models/GlobalDailyStat.js";
 import "./models/WeeklyStat.js";
 import "./models/MonthlyStat.js";
 import "./models/YearlyStat.js";
+import "./models/GlobalDailyStatByState.js";
+import "./models/WeeklyStatByState.js";
+import "./models/MonthlyStatByState.js";
+import "./models/YearlyStatByState.js";
 
 dotenv.config();
 

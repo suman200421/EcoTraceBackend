@@ -1,0 +1,40 @@
+import { QueryTypes } from "sequelize";
+import sequelize from "../../config/db.js";
+import { toNumber, extractYear } from "../stats/helpers.js";
+
+export const getStateStatsThisYear = async (req, res) => {
+  try {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentYear = extractYear(todayStr);
+
+    const rows = await sequelize.query(
+      `
+      SELECT
+        state,
+        total_distance_km as distance_km,
+        total_carbon_kg as carbon_kg
+      FROM yearly_stats_by_state
+      WHERE year = :year
+      ORDER BY total_carbon_kg DESC
+      `,
+      { 
+        replacements: { year: currentYear },
+        type: QueryTypes.SELECT 
+      }
+    );
+
+    const formatted = rows.map((row) => ({
+      state: row.state,
+      distance_km: toNumber(row.distance_km),
+      carbon_kg: toNumber(row.carbon_kg),
+    }));
+
+    res.json({
+      range: "this-year",
+      data: formatted
+    });
+  } catch (err) {
+    console.error("State stats this year error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
