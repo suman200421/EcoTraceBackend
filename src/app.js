@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import authRoutes from "./routes/auth.routes.js";
 import statsRoutes from "./routes/stats.routes.js";
+import analyticsRoutes from "./routes/analytics.routes.js";
 
 dotenv.config();
 
@@ -15,7 +16,7 @@ app.get('/cron/ping', (req, res) => {
   console.log('Cron triggered');
   res.send('OK');
 });
-
+app.use("/api",analyticsRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/stats", statsRoutes);
 
