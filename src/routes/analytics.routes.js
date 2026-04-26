@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear, getStateStatsAllTime } from '../controllers/analytics.controller.js';
+import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear, getStateStatsAllTime, getStateLast7DaysStats, getStateLast7WeeksStats, getStateLast12MonthsStats, getStateLast10YearsStats } from '../controllers/analytics.controller.js';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const router = express.Router();
@@ -408,5 +408,97 @@ router.get("/public/stats/state/this-year", getStateStatsThisYear);
  *         description: Successfully retrieved all-time state stats
  */
 router.get("/public/stats/state/all-time", getStateStatsAllTime);
+
+/**
+ * @swagger
+ * /api/public/stats/state/last-7-days:
+ *   get:
+ *     summary: Get state-specific last 7 days stats
+ *     description: Returns daily aggregated distance and carbon data for a single state over the last 7 days.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the state
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 7 days state stats
+ *       400:
+ *         description: State is required
+ */
+router.get("/public/stats/state/last-7-days", getStateLast7DaysStats);
+
+/**
+ * @swagger
+ * /api/public/stats/state/last-7-weeks:
+ *   get:
+ *     summary: Get state-specific last 7 weeks stats
+ *     description: Returns weekly aggregated distance and carbon data for a single state over the last 7 weeks.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the state
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 7 weeks state stats
+ *       400:
+ *         description: State is required
+ */
+router.get("/public/stats/state/last-7-weeks", getStateLast7WeeksStats);
+
+/**
+ * @swagger
+ * /api/public/stats/state/last-12-months:
+ *   get:
+ *     summary: Get state-specific last 12 months stats
+ *     description: Returns monthly aggregated distance and carbon data for a single state over the last 12 months.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the state
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 12 months state stats
+ *       400:
+ *         description: State is required
+ */
+router.get("/public/stats/state/last-12-months", getStateLast12MonthsStats);
+
+/**
+ * @swagger
+ * /api/public/stats/state/last-10-years:
+ *   get:
+ *     summary: Get state-specific last 10 years stats
+ *     description: Returns yearly aggregated distance and carbon data for a single state over the last 10 years.
+ *     tags:
+ *       - Public Stats (State Level)
+ *     parameters:
+ *       - in: query
+ *         name: state
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: Name of the state
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved last 10 years state stats
+ *       400:
+ *         description: State is required
+ */
+router.get("/public/stats/state/last-10-years", getStateLast10YearsStats);
 
 export default router;
