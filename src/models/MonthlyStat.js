@@ -18,6 +18,11 @@ const MonthlyStat = sequelize.define(
       allowNull: false,
       defaultValue: 0,
     },
+    user_count: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 0,
+    },
   },
   {
     tableName: "monthly_stats",

@@ -1,6 +1,6 @@
 import { QueryTypes } from "sequelize";
 import sequelize from "../../../config/db.js";
-import { toNumber, roundNumber } from "../../stats/helpers.js";
+import { toNumber, roundNumber,VALID_RANGES } from "../../stats/helpers.js";
 
 export const getPublicStats = async (req, res) => {
   try {

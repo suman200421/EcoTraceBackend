@@ -75,6 +75,35 @@ export const ingestVehicleRecords = async (req, res) => {
       );
       const existingDateStates = new Set(existingDateStatesQuery.map((r) => `${r.date}_${r.state}`));
 
+      const uniqueYears = [...new Set(groupedValues.map((v) => extractYear(v.date)))];
+      const minYear = Math.min(...uniqueYears);
+      const maxYear = Math.max(...uniqueYears);
+
+      const existingVehicleRecordsQuery = await sequelize.query(
+        `SELECT date, vehicle_type FROM daily_vehicle_stats WHERE user_id = :userId AND date >= :startDate AND date <= :endDate`,
+        { replacements: { userId: req.userId, startDate: `${minYear}-01-01`, endDate: `${maxYear}-12-31` }, type: QueryTypes.SELECT, transaction }
+      );
+
+      const existingVehicleDates = new Set();
+      const existingVehicleWeeks = new Set();
+      const existingVehicleMonths = new Set();
+      const existingVehicleYears = new Set();
+
+      const existingGlobalWeeks = new Set();
+      const existingGlobalMonths = new Set();
+      const existingGlobalYears = new Set();
+
+      for (const row of existingVehicleRecordsQuery) {
+        existingVehicleDates.add(`${row.date}_${row.vehicle_type}`);
+        existingVehicleWeeks.add(`${getWeekStart(row.date)}_${row.vehicle_type}`);
+        existingVehicleMonths.add(`${formatMonth(row.date)}_${row.vehicle_type}`);
+        existingVehicleYears.add(`${extractYear(row.date)}_${row.vehicle_type}`);
+
+        existingGlobalWeeks.add(getWeekStart(row.date));
+        existingGlobalMonths.add(formatMonth(row.date));
+        existingGlobalYears.add(extractYear(row.date));
+      }
+
       const dailyDeltas = new Map();
       const weeklyDeltas = new Map();
       const monthlyDeltas = new Map();
@@ -84,6 +113,11 @@ export const ingestVehicleRecords = async (req, res) => {
       const weeklyStateDeltas = new Map();
       const monthlyStateDeltas = new Map();
       const yearlyStateDeltas = new Map();
+
+      const dailyVehicleDeltas = new Map();
+      const weeklyVehicleDeltas = new Map();
+      const monthlyVehicleDeltas = new Map();
+      const yearlyVehicleDeltas = new Map();
 
       for (const row of groupedValues) {
         if (!dailyDeltas.has(row.date)) {
@@ -99,7 +133,11 @@ export const ingestVehicleRecords = async (req, res) => {
 
         const weekStart = getWeekStart(row.date);
         if (!weeklyDeltas.has(weekStart)) {
-          weeklyDeltas.set(weekStart, { distanceKm: 0, carbonKg: 0 });
+          weeklyDeltas.set(weekStart, {
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingGlobalWeeks.has(weekStart) ? 0 : 1
+          });
         }
         const weekly = weeklyDeltas.get(weekStart);
         weekly.distanceKm += row.distanceKm;
@@ -107,7 +145,11 @@ export const ingestVehicleRecords = async (req, res) => {
 
         const month = formatMonth(row.date);
         if (!monthlyDeltas.has(month)) {
-          monthlyDeltas.set(month, { distanceKm: 0, carbonKg: 0 });
+          monthlyDeltas.set(month, {
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingGlobalMonths.has(month) ? 0 : 1
+          });
         }
         const monthly = monthlyDeltas.get(month);
         monthly.distanceKm += row.distanceKm;
@@ -115,49 +157,111 @@ export const ingestVehicleRecords = async (req, res) => {
 
         const year = extractYear(row.date);
         if (!yearlyDeltas.has(year)) {
-          yearlyDeltas.set(year, { distanceKm: 0, carbonKg: 0 });
+          yearlyDeltas.set(year, {
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingGlobalYears.has(year) ? 0 : 1
+          });
         }
         const yearly = yearlyDeltas.get(year);
         yearly.distanceKm += row.distanceKm;
         yearly.carbonKg += row.carbonKg;
 
-        const stateKey = `${row.date}_${row.state}`;
-        if (!dailyStateDeltas.has(stateKey)) {
-          dailyStateDeltas.set(stateKey, {
+        if (batchState) {
+          const stateKey = `${row.date}_${batchState}`;
+          if (!dailyStateDeltas.has(stateKey)) {
+            dailyStateDeltas.set(stateKey, {
+              date: row.date,
+              state: batchState,
+              distanceKm: 0,
+              carbonKg: 0,
+              userCount: existingDateStates.has(stateKey) ? 0 : 1
+            });
+          }
+          const dailyState = dailyStateDeltas.get(stateKey);
+          dailyState.distanceKm += row.distanceKm;
+          dailyState.carbonKg += row.carbonKg;
+
+          const weekStateKey = `${weekStart}_${batchState}`;
+          if (!weeklyStateDeltas.has(weekStateKey)) {
+            weeklyStateDeltas.set(weekStateKey, { weekStart, state: batchState, distanceKm: 0, carbonKg: 0 });
+          }
+          const weeklyState = weeklyStateDeltas.get(weekStateKey);
+          weeklyState.distanceKm += row.distanceKm;
+          weeklyState.carbonKg += row.carbonKg;
+
+          const monthStateKey = `${month}_${batchState}`;
+          if (!monthlyStateDeltas.has(monthStateKey)) {
+            monthlyStateDeltas.set(monthStateKey, { month, state: batchState, distanceKm: 0, carbonKg: 0 });
+          }
+          const monthlyState = monthlyStateDeltas.get(monthStateKey);
+          monthlyState.distanceKm += row.distanceKm;
+          monthlyState.carbonKg += row.carbonKg;
+
+          const yearStateKey = `${year}_${batchState}`;
+          if (!yearlyStateDeltas.has(yearStateKey)) {
+            yearlyStateDeltas.set(yearStateKey, { year, state: batchState, distanceKm: 0, carbonKg: 0 });
+          }
+          const yearlyState = yearlyStateDeltas.get(yearStateKey);
+          yearlyState.distanceKm += row.distanceKm;
+          yearlyState.carbonKg += row.carbonKg;
+        }
+
+        const vehicleDailyKey = `${row.date}_${row.vehicleType}`;
+        if (!dailyVehicleDeltas.has(vehicleDailyKey)) {
+          dailyVehicleDeltas.set(vehicleDailyKey, {
             date: row.date,
-            state: row.state,
+            vehicleType: row.vehicleType,
             distanceKm: 0,
             carbonKg: 0,
-            userCount: existingDateStates.has(stateKey) ? 0 : 1
+            userCount: existingVehicleDates.has(vehicleDailyKey) ? 0 : 1
           });
         }
-        const dailyState = dailyStateDeltas.get(stateKey);
-        dailyState.distanceKm += row.distanceKm;
-        dailyState.carbonKg += row.carbonKg;
+        const dailyVehicle = dailyVehicleDeltas.get(vehicleDailyKey);
+        dailyVehicle.distanceKm += row.distanceKm;
+        dailyVehicle.carbonKg += row.carbonKg;
 
-        const weekStateKey = `${weekStart}_${row.state}`;
-        if (!weeklyStateDeltas.has(weekStateKey)) {
-          weeklyStateDeltas.set(weekStateKey, { weekStart, state: row.state, distanceKm: 0, carbonKg: 0 });
+        const vehicleWeeklyKey = `${weekStart}_${row.vehicleType}`;
+        if (!weeklyVehicleDeltas.has(vehicleWeeklyKey)) {
+          weeklyVehicleDeltas.set(vehicleWeeklyKey, {
+            weekStart,
+            vehicleType: row.vehicleType,
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingVehicleWeeks.has(vehicleWeeklyKey) ? 0 : 1
+          });
         }
-        const weeklyState = weeklyStateDeltas.get(weekStateKey);
-        weeklyState.distanceKm += row.distanceKm;
-        weeklyState.carbonKg += row.carbonKg;
+        const weeklyVehicle = weeklyVehicleDeltas.get(vehicleWeeklyKey);
+        weeklyVehicle.distanceKm += row.distanceKm;
+        weeklyVehicle.carbonKg += row.carbonKg;
 
-        const monthStateKey = `${month}_${row.state}`;
-        if (!monthlyStateDeltas.has(monthStateKey)) {
-          monthlyStateDeltas.set(monthStateKey, { month, state: row.state, distanceKm: 0, carbonKg: 0 });
+        const vehicleMonthlyKey = `${month}_${row.vehicleType}`;
+        if (!monthlyVehicleDeltas.has(vehicleMonthlyKey)) {
+          monthlyVehicleDeltas.set(vehicleMonthlyKey, {
+            month,
+            vehicleType: row.vehicleType,
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingVehicleMonths.has(vehicleMonthlyKey) ? 0 : 1
+          });
         }
-        const monthlyState = monthlyStateDeltas.get(monthStateKey);
-        monthlyState.distanceKm += row.distanceKm;
-        monthlyState.carbonKg += row.carbonKg;
+        const monthlyVehicle = monthlyVehicleDeltas.get(vehicleMonthlyKey);
+        monthlyVehicle.distanceKm += row.distanceKm;
+        monthlyVehicle.carbonKg += row.carbonKg;
 
-        const yearStateKey = `${year}_${row.state}`;
-        if (!yearlyStateDeltas.has(yearStateKey)) {
-          yearlyStateDeltas.set(yearStateKey, { year, state: row.state, distanceKm: 0, carbonKg: 0 });
+        const vehicleYearlyKey = `${year}_${row.vehicleType}`;
+        if (!yearlyVehicleDeltas.has(vehicleYearlyKey)) {
+          yearlyVehicleDeltas.set(vehicleYearlyKey, {
+            year,
+            vehicleType: row.vehicleType,
+            distanceKm: 0,
+            carbonKg: 0,
+            userCount: existingVehicleYears.has(vehicleYearlyKey) ? 0 : 1
+          });
         }
-        const yearlyState = yearlyStateDeltas.get(yearStateKey);
-        yearlyState.distanceKm += row.distanceKm;
-        yearlyState.carbonKg += row.carbonKg;
+        const yearlyVehicle = yearlyVehicleDeltas.get(vehicleYearlyKey);
+        yearlyVehicle.distanceKm += row.distanceKm;
+        yearlyVehicle.carbonKg += row.carbonKg;
       }
 
       await sequelize.query(
@@ -204,18 +308,19 @@ export const ingestVehicleRecords = async (req, res) => {
         const weeklyReplacements = [];
         const weeklyPlaceholders = Array.from(weeklyDeltas.entries())
           .map(([weekStart, data]) => {
-            weeklyReplacements.push(weekStart, data.distanceKm, data.carbonKg);
-            return "(?, ?, ?)";
+            weeklyReplacements.push(weekStart, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?)";
           })
           .join(", ");
 
         await sequelize.query(
           `
-            INSERT INTO weekly_stats (week_start, total_distance_km, total_carbon_kg)
+            INSERT INTO weekly_stats (week_start, total_distance_km, total_carbon_kg, user_count)
             VALUES ${weeklyPlaceholders}
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
-              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
           `,
           { replacements: weeklyReplacements, transaction }
         );
@@ -225,18 +330,19 @@ export const ingestVehicleRecords = async (req, res) => {
         const monthlyReplacements = [];
         const monthlyPlaceholders = Array.from(monthlyDeltas.entries())
           .map(([month, data]) => {
-            monthlyReplacements.push(month, data.distanceKm, data.carbonKg);
-            return "(?, ?, ?)";
+            monthlyReplacements.push(month, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?)";
           })
           .join(", ");
 
         await sequelize.query(
           `
-            INSERT INTO monthly_stats (month, total_distance_km, total_carbon_kg)
+            INSERT INTO monthly_stats (month, total_distance_km, total_carbon_kg, user_count)
             VALUES ${monthlyPlaceholders}
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
-              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
           `,
           { replacements: monthlyReplacements, transaction }
         );
@@ -246,18 +352,19 @@ export const ingestVehicleRecords = async (req, res) => {
         const yearlyReplacements = [];
         const yearlyPlaceholders = Array.from(yearlyDeltas.entries())
           .map(([year, data]) => {
-            yearlyReplacements.push(year, data.distanceKm, data.carbonKg);
-            return "(?, ?, ?)";
+            yearlyReplacements.push(year, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?)";
           })
           .join(", ");
 
         await sequelize.query(
           `
-            INSERT INTO yearly_stats (year, total_distance_km, total_carbon_kg)
+            INSERT INTO yearly_stats (year, total_distance_km, total_carbon_kg, user_count)
             VALUES ${yearlyPlaceholders}
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
-              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
           `,
           { replacements: yearlyReplacements, transaction }
         );
@@ -345,6 +452,94 @@ export const ingestVehicleRecords = async (req, res) => {
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
           `,
           { replacements: yearlyStateReplacements, transaction }
+        );
+      }
+
+      if (dailyVehicleDeltas.size > 0) {
+        const dailyVehicleReplacements = [];
+        const dailyVehiclePlaceholders = Array.from(dailyVehicleDeltas.values())
+          .map((data) => {
+            dailyVehicleReplacements.push(data.date, data.vehicleType, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO vehicle_daily_stats (date, vehicle_type, total_distance_km, total_carbon_kg, user_count)
+            VALUES ${dailyVehiclePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
+          `,
+          { replacements: dailyVehicleReplacements, transaction }
+        );
+      }
+
+      if (weeklyVehicleDeltas.size > 0) {
+        const weeklyVehicleReplacements = [];
+        const weeklyVehiclePlaceholders = Array.from(weeklyVehicleDeltas.values())
+          .map((data) => {
+            weeklyVehicleReplacements.push(data.weekStart, data.vehicleType, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO vehicle_weekly_stats (week_start, vehicle_type, total_distance_km, total_carbon_kg, user_count)
+            VALUES ${weeklyVehiclePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
+          `,
+          { replacements: weeklyVehicleReplacements, transaction }
+        );
+      }
+
+      if (monthlyVehicleDeltas.size > 0) {
+        const monthlyVehicleReplacements = [];
+        const monthlyVehiclePlaceholders = Array.from(monthlyVehicleDeltas.values())
+          .map((data) => {
+            monthlyVehicleReplacements.push(data.month, data.vehicleType, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO vehicle_monthly_stats (month, vehicle_type, total_distance_km, total_carbon_kg, user_count)
+            VALUES ${monthlyVehiclePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
+          `,
+          { replacements: monthlyVehicleReplacements, transaction }
+        );
+      }
+
+      if (yearlyVehicleDeltas.size > 0) {
+        const yearlyVehicleReplacements = [];
+        const yearlyVehiclePlaceholders = Array.from(yearlyVehicleDeltas.values())
+          .map((data) => {
+            yearlyVehicleReplacements.push(data.year, data.vehicleType, data.distanceKm, data.carbonKg, data.userCount);
+            return "(?, ?, ?, ?, ?)";
+          })
+          .join(", ");
+
+        await sequelize.query(
+          `
+            INSERT INTO vehicle_yearly_stats (year, vehicle_type, total_distance_km, total_carbon_kg, user_count)
+            VALUES ${yearlyVehiclePlaceholders}
+            ON DUPLICATE KEY UPDATE
+              total_distance_km = total_distance_km + VALUES(total_distance_km),
+              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
+              user_count = user_count + VALUES(user_count)
+          `,
+          { replacements: yearlyVehicleReplacements, transaction }
         );
       }
     });

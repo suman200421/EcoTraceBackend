@@ -3,6 +3,8 @@ export { getLast7DaysStats } from "./public/global/getLast7DaysStats.js";
 export { getLast12MonthsStats } from "./public/global/getLast12MonthsStats.js";
 export { getLast10YearsStats } from "./public/global/getLast10YearsStats.js";
 export { getLast7WeeksStats } from "./public/global/getLast7WeeksStats.js";
+export { getVehicleStats } from "./public/global/getVehicleStats.js";
+export { getSummaryStats } from "./public/global/getSummaryStats.js";
 export { getStateStatsToday } from "./public/state/getStateStatsToday.js";
 export { getStateStatsThisWeek } from "./public/state/getStateStatsThisWeek.js";
 export { getStateStatsThisMonth } from "./public/state/getStateStatsThisMonth.js";

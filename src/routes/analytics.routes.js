@@ -1,5 +1,5 @@
 import express from 'express';
-import { getPublicStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear, getStateStatsAllTime, getStateLast7DaysStats, getStateLast7WeeksStats, getStateLast12MonthsStats, getStateLast10YearsStats } from '../controllers/analytics.controller.js';
+import { getPublicStats, getSummaryStats, getVehicleStats, getLast7DaysStats, getLast12MonthsStats, getLast10YearsStats, getLast7WeeksStats, getStateStatsToday, getStateStatsThisWeek, getStateStatsThisMonth, getStateStatsThisYear, getStateStatsAllTime, getStateLast7DaysStats, getStateLast7WeeksStats, getStateLast12MonthsStats, getStateLast10YearsStats } from '../controllers/analytics.controller.js';
 import swaggerJSDoc from 'swagger-jsdoc';
 
 const router = express.Router();
@@ -82,6 +82,51 @@ const router = express.Router();
  *                   example: Server error
  */
 router.get('/public/stats', getPublicStats);
+
+/**
+ * @swagger
+ * /api/public/stats/summary:
+ *   get:
+ *     summary: Get single summary of all key aggregated metrics
+ *     description: Returns aggregated distance, carbon data, and user counts for today, this week, this month, this year, and all time.
+ *     tags:
+ *       - Public Stats
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved summary stats
+ *       500:
+ *         description: Server error
+ */
+router.get('/public/stats/summary', getSummaryStats);
+
+
+/**
+ * @swagger
+ * /api/public/stats/vehicles:
+ *   get:
+ *     summary: Get vehicle-wise aggregated analytics data
+ *     description: Returns aggregated distance, carbon data, and user counts broken down by vehicle type. Supports daily, weekly, monthly, and yearly ranges.
+ *     tags:
+ *       - Public Stats
+ *     parameters:
+ *       - in: query
+ *         name: range
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: [daily, weekly, monthly, yearly]
+ *           default: daily
+ *         description: Time range for aggregation
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved vehicle aggregated stats
+ *       400:
+ *         description: Invalid range parameter
+ *       500:
+ *         description: Server error
+ */
+router.get('/public/stats/vehicles', getVehicleStats);
+
 
 /**
  * @swagger

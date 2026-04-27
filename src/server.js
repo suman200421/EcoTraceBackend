@@ -14,6 +14,10 @@ import "./models/GlobalDailyStatByState.js";
 import "./models/WeeklyStatByState.js";
 import "./models/MonthlyStatByState.js";
 import "./models/YearlyStatByState.js";
+import "./models/VehicleDailyStat.js";
+import "./models/VehicleWeeklyStat.js";
+import "./models/VehicleMonthlyStat.js";
+import "./models/VehicleYearlyStat.js";
 
 dotenv.config();
 

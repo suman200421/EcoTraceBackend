@@ -1,11 +1,15 @@
 import { DataTypes } from "sequelize";
 import sequelize from "../config/db.js";
 
-const YearlyStat = sequelize.define(
-  "YearlyStat",
+const VehicleMonthlyStat = sequelize.define(
+  "VehicleMonthlyStat",
   {
-    year: {
-      type: DataTypes.INTEGER,
+    month: {
+      type: DataTypes.STRING,
+      primaryKey: true,
+    },
+    vehicle_type: {
+      type: DataTypes.STRING,
       primaryKey: true,
     },
     total_distance_km: {
@@ -25,9 +29,13 @@ const YearlyStat = sequelize.define(
     },
   },
   {
-    tableName: "yearly_stats",
+    tableName: "vehicle_monthly_stats",
     timestamps: false,
+    indexes: [
+      { fields: ["month"] },
+      { fields: ["vehicle_type"] },
+    ],
   }
 );
 
-export default YearlyStat;
+export default VehicleMonthlyStat;
