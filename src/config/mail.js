@@ -14,12 +14,8 @@ const transporter = nodemailer.createTransport({
   },
   connectionTimeout: 15000,
   socketTimeout: 15000,
-  pool: {
-    maxConnections: 5,
-    maxMessages: 100,
-    rateDelta: 2000,
-    rateLimit: 10
-  }
+  logger: true,
+  debug: true
 });
 
 // Retry utility for failed emails
