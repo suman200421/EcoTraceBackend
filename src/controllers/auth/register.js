@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../../models/User.js";
 import PendingUser from "../../models/PendingUser.js";
-import transporter from "../../config/mail.js";
+import { sendEmailWithRetry } from "../../config/mail.js";
 
 const PASSWORD_SALT_ROUNDS = 12;
 
@@ -41,28 +41,21 @@ export const register = async (req, res) => {
       });
     }
 
-    // Send email asynchronously (non-blocking)
-    transporter.sendMail(
-      {
-        from: process.env.EMAIL_USER,
-        to: email,
-        subject: "Your Verification OTP",
-        html: `
-          <h2>Email Verification</h2>
-          <p>Your OTP is:</p>
-          <h1>${otp}</h1>
-          <p>This OTP will expire in 10 minutes.</p>
-        `
-      },
-      (error, info) => {
-        if (error) {
-          console.error("Email sending failed:", error);
-          // Log but don't fail the registration - OTP is already saved
-        } else {
-          console.log("Email sent:", info.response);
-        }
-      }
-    );
+    // Send email asynchronously with retry (non-blocking)
+    sendEmailWithRetry({
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Your Verification OTP",
+      html: `
+        <h2>Email Verification</h2>
+        <p>Your OTP is:</p>
+        <h1>${otp}</h1>
+        <p>This OTP will expire in 10 minutes.</p>
+      `
+    }).catch(error => {
+      console.error("Email sending failed after retries:", error.message);
+      // Log but don't fail the registration - OTP is already saved
+    });
 
     res.status(201).json({
       message: "OTP sent to your email. Please check your inbox."

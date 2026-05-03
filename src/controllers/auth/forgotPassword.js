@@ -1,6 +1,6 @@
 import crypto from "crypto";
 import User from "../../models/User.js";
-import transporter from "../../config/mail.js";
+import { sendEmailWithRetry } from "../../config/mail.js";
 
 const RESET_TOKEN_EXPIRY_MINUTES = 15;
 export const forgotPassword = async (req, res) => {
@@ -21,8 +21,8 @@ export const forgotPassword = async (req, res) => {
 
       const resetUrl = `${process.env.CLIENT_URL || "https://yourapp.com"}/reset-password?token=${resetToken}`;
 
-      // Send email asynchronously (non-blocking)
-      transporter.sendMail({
+      // Send email asynchronously with retry (non-blocking)
+      sendEmailWithRetry({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Password Reset Request",
@@ -32,12 +32,8 @@ export const forgotPassword = async (req, res) => {
           <p><a href="${resetUrl}">Reset your password</a></p>
           <p>If you did not request this, you can safely ignore this email.</p>
         `
-      }, (error, info) => {
-        if (error) {
-          console.error("Password reset email failed:", error);
-        } else {
-          console.log("Password reset email sent:", info.response);
-        }
+      }).catch(error => {
+        console.error("Password reset email failed after retries:", error.message);
       });
     }
 

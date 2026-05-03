@@ -1,22 +1,41 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
-  },
-  connectionTimeout: 10000, // 10 seconds
-  socketTimeout: 10000, // 10 seconds
-  pool: {
-    maxConnections: 5,
-    maxMessages: 100,
-    rateDelta: 2000,
-    rateLimit: 14 // max 14 messages per 2 seconds
-  }
-});
+const resend = new Resend(process.env.RESEND_API_KEY);
 
-export default transporter;
+// Send email with retry logic
+export const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const result = await resend.emails.send({
+        from: mailOptions.from || "onboarding@resend.dev", // Replace with your verified sender
+        to: mailOptions.to,
+        subject: mailOptions.subject,
+        html: mailOptions.html,
+      });
+      
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      
+      console.log(`Email sent successfully on attempt ${attempt}:`, result.data.id);
+      return result;
+    } catch (error) {
+      console.error(`Email send attempt ${attempt} failed:`, error.message);
+      
+      if (attempt === maxRetries) {
+        console.error(`Email delivery failed after ${maxRetries} attempts`);
+        throw error;
+      }
+      
+      // Wait before retrying (exponential backoff)
+      const delayMs = Math.pow(2, attempt) * 1000;
+      console.log(`Retrying in ${delayMs}ms...`);
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+};
+
+export default resend;
