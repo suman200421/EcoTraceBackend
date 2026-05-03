@@ -41,20 +41,31 @@ export const register = async (req, res) => {
       });
     }
 
-    await transporter.sendMail({
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: "Your Verification OTP",
-      html: `
-        <h2>Email Verification</h2>
-        <p>Your OTP is:</p>
-        <h1>${otp}</h1>
-        <p>This OTP will expire in 10 minutes.</p>
-      `
-    });
+    // Send email asynchronously (non-blocking)
+    transporter.sendMail(
+      {
+        from: process.env.EMAIL_USER,
+        to: email,
+        subject: "Your Verification OTP",
+        html: `
+          <h2>Email Verification</h2>
+          <p>Your OTP is:</p>
+          <h1>${otp}</h1>
+          <p>This OTP will expire in 10 minutes.</p>
+        `
+      },
+      (error, info) => {
+        if (error) {
+          console.error("Email sending failed:", error);
+          // Log but don't fail the registration - OTP is already saved
+        } else {
+          console.log("Email sent:", info.response);
+        }
+      }
+    );
 
     res.status(201).json({
-      message: "OTP sent to your email"
+      message: "OTP sent to your email. Please check your inbox."
     });
   } catch (err) {
     console.error("Register error:", err);

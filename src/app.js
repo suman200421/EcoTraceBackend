@@ -16,6 +16,7 @@ app.get('/cron/ping', (req, res) => {
   console.log('Cron triggered');
   res.send('OK');
 });
+
 app.use("/api",analyticsRoutes)
 app.use("/api/auth", authRoutes);
 app.use("/api/stats", statsRoutes);

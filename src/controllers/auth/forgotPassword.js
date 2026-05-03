@@ -21,7 +21,8 @@ export const forgotPassword = async (req, res) => {
 
       const resetUrl = `${process.env.CLIENT_URL || "https://yourapp.com"}/reset-password?token=${resetToken}`;
 
-      await transporter.sendMail({
+      // Send email asynchronously (non-blocking)
+      transporter.sendMail({
         from: process.env.EMAIL_USER,
         to: email,
         subject: "Password Reset Request",
@@ -31,6 +32,12 @@ export const forgotPassword = async (req, res) => {
           <p><a href="${resetUrl}">Reset your password</a></p>
           <p>If you did not request this, you can safely ignore this email.</p>
         `
+      }, (error, info) => {
+        if (error) {
+          console.error("Password reset email failed:", error);
+        } else {
+          console.log("Password reset email sent:", info.response);
+        }
       });
     }
 
