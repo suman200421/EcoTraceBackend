@@ -4,17 +4,11 @@ import dotenv from "dotenv";
 dotenv.config();
 
 const transporter = nodemailer.createTransport({
-  host: "smtp.gmail.com",
-  port: 587,
-  secure: false,
+  service: "gmail",
   auth: {
     user: process.env.EMAIL_USER,
     pass: process.env.EMAIL_PASS
-  },
-  connectionTimeout: 15000,
-  socketTimeout: 15000,
-  logger: true,
-  debug: true
+  }
 });
 
 // Retry utility for failed emails
