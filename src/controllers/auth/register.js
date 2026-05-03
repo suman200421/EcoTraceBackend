@@ -42,7 +42,7 @@ export const register = async (req, res) => {
     }
 
     // Send email asynchronously with retry (non-blocking)
-    sendEmailWithRetry({
+    await sendEmailWithRetry({
       from: process.env.EMAIL_USER,
       to: email,
       subject: "Your Verification OTP",
