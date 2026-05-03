@@ -23,7 +23,7 @@ export const forgotPassword = async (req, res) => {
 
       // Send email asynchronously with retry (non-blocking)
       sendEmailWithRetry({
-        from: process.env.EMAIL_USER,
+        from: `EcoTrace <${process.env.EMAIL_USER}>`,
         to: email,
         subject: "Password Reset Request",
         html: `

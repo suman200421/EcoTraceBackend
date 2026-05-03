@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../../models/User.js";
 import PendingUser from "../../models/PendingUser.js";
-import transporter, { sendEmailWithRetry } from "../../config/mail.js";
+import { sendEmailWithRetry } from "../../config/mail.js";
 
 const PASSWORD_SALT_ROUNDS = 12;
 
@@ -43,7 +43,7 @@ export const register = async (req, res) => {
 
     // Send email asynchronously with retry (non-blocking)
     await sendEmailWithRetry({
-      from: process.env.EMAIL_USER,
+      from: `EcoTrace <${process.env.EMAIL_USER}>`,
       to: email,
       subject: "Your Verification OTP",
       html: `
