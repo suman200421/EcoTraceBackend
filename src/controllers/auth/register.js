@@ -1,7 +1,7 @@
 import bcrypt from "bcrypt";
 import User from "../../models/User.js";
 import PendingUser from "../../models/PendingUser.js";
-import { sendEmailWithRetry } from "../../config/mail.js";
+import transporter, { sendEmailWithRetry } from "../../config/mail.js";
 
 const PASSWORD_SALT_ROUNDS = 12;
 

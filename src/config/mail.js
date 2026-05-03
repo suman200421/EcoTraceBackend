@@ -1,26 +1,33 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+const transporter = nodemailer.createTransport({
+  host: "smtp.gmail.com",
+  port: 587,
+  secure: false, // Use TLS instead of SSL
+  requireTLS: true,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
+  },
+  connectionTimeout: 15000,
+  socketTimeout: 15000,
+  pool: {
+    maxConnections: 5,
+    maxMessages: 100,
+    rateDelta: 2000,
+    rateLimit: 10
+  }
+});
 
-// Send email with retry logic
+// Retry utility for failed emails
 export const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
-      const result = await resend.emails.send({
-        from: mailOptions.from || "onboarding@resend.dev", // Replace with your verified sender
-        to: mailOptions.to,
-        subject: mailOptions.subject,
-        html: mailOptions.html,
-      });
-      
-      if (result.error) {
-        throw new Error(result.error.message);
-      }
-      
-      console.log(`Email sent successfully on attempt ${attempt}:`, result.data.id);
+      const result = await transporter.sendMail(mailOptions);
+      console.log(`Email sent successfully on attempt ${attempt}`);
       return result;
     } catch (error) {
       console.error(`Email send attempt ${attempt} failed:`, error.message);
@@ -38,4 +45,4 @@ export const sendEmailWithRetry = async (mailOptions, maxRetries = 3) => {
   }
 };
 
-export default resend;
+export default transporter;
