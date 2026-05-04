@@ -26,7 +26,7 @@ const User = sequelize.define("User", {
   },
   password: {
     type: DataTypes.STRING,
-    allowNull: false
+    allowNull: true
   },
   refreshToken: {
     type: DataTypes.TEXT,
@@ -44,6 +44,18 @@ const User = sequelize.define("User", {
     type: DataTypes.INTEGER,
     allowNull: false,
     defaultValue: 0
+  },
+  provider: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  providerId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  avatar: {
+    type: DataTypes.STRING,
+    allowNull: true
   }
 
 }, {

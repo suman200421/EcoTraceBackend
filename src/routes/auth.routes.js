@@ -7,7 +7,8 @@ import {
   logout,
   verifyOtp,
   forgotPassword,
-  resetPassword
+  resetPassword,
+  googleLogin
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -237,5 +238,45 @@ router.post("/refresh", refresh);
  *         description: Logout successful
  */
 router.post("/logout", logout);
+/**
+ * @swagger
+ * /api/auth/google:
+ *   post:
+ *     summary: Login or register with Google ID token
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - token
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Google ID token from frontend
+ *     responses:
+ *       200:
+ *         description: Login successful
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 accessToken:
+ *                   type: string
+ *                 refreshToken:
+ *                   type: string
+ *                 user:
+ *                   type: object
+ *       400:
+ *         description: Missing token
+ *       401:
+ *         description: Invalid or expired token
+ *       500:
+ *         description: Server error
+ */
+router.post("/google", googleLogin);
 
 export default router;

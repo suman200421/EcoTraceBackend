@@ -13,6 +13,11 @@ export const login = async (req, res) => {
     if (!user)
       return res.status(401).json({ message: "Invalid credentials" });
 
+    // Reject password login for OAuth-only accounts
+    if (!user.password) {
+      return res.status(401).json({ message: "This account uses Google login. Please sign in with Google." });
+    }
+
     const validPassword = await bcrypt.compare(password, user.password);
     if (!validPassword)
       return res.status(401).json({ message: "Invalid credentials" });

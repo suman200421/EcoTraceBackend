@@ -5,3 +5,5 @@ export { forgotPassword } from "./auth/forgotPassword.js";
 export { resetPassword } from "./auth/resetPassword.js";
 export { refresh } from "./auth/refresh.js";
 export { logout } from "./auth/logout.js";
+export { googleLogin } from "./auth/googleLogin.js";
+export { googleRedirect, googleCallback } from "./auth/googleWebFlow.js";
