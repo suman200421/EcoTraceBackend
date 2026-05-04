@@ -8,17 +8,14 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const client = new OAuth2Client();
+const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
 /**
  * Verify Google ID token and extract user payload.
  * Accepts tokens issued for Web, Android, and Expo client IDs.
  */
 const verifyGoogleToken = async (idToken) => {
-  const allowedAudiences = [
-    process.env.GOOGLE_WEB_CLIENT_ID,
-    process.env.GOOGLE_ANDROID_CLIENT_ID
-  ].filter(Boolean);
+  const allowedAudiences = process.env.GOOGLE_WEB_CLIENT_ID
 
   const ticket = await client.verifyIdToken({
     idToken,
