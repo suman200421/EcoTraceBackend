@@ -44,7 +44,7 @@ export const googleLogin = async (req, res) => {
     // --- Verify token with Google ---
     let payload;
     try {
-      payload = await verifyGoogleToken(token);
+      payload = await verifyGoogleToken(idToken);
     } catch (verifyErr) {
       return res.status(401).json({ message: "Invalid Google ID token" });
     }
