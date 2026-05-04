@@ -34,10 +34,10 @@ const verifyGoogleToken = async (idToken) => {
  */
 export const googleLogin = async (req, res) => {
   try {
-    const { token } = req.body;
+    const { idToken } = req.body;
 
     // --- Validate request ---
-    if (!token) {
+    if (!idToken) {
       return res.status(400).json({ message: "Google ID token is required" });
     }
 
