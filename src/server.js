@@ -29,7 +29,7 @@ const PORT = process.env.PORT;
     // await sequelize.sync();
     await sequelize.sync();
 
-    console.log("MySQL connected");
+    console.log("PostgreSQL connected");
 
     //DB cron Job to keep the connection alive
     cron.schedule("*/5 * * * *", async () => {

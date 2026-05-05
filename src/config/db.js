@@ -10,15 +10,16 @@ const sequelize = new Sequelize(
   {
     host: process.env.DB_HOST,
     port: process.env.DB_PORT,
-    dialect: "mysql",
+    dialect: "postgres",
+    //dialect: "mysql",
     timezone: process.env.DB_TIMEZONE || "+05:30",
     dialectOptions: {
       ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-    connectTimeout: 20000,
-    timezone: process.env.DB_TIMEZONE || "+05:30"
+        require: true,
+        rejectUnauthorized: false,
+      },
+      connectTimeout: 20000,
+      timezone: process.env.DB_TIMEZONE || "+05:30"
     },
     logging: false
   }

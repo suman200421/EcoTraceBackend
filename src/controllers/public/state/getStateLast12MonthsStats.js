@@ -19,7 +19,10 @@ export const getStateLast12MonthsStats = async (req, res) => {
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
       FROM monthly_stats_by_state
+      /* MYSQL:
       WHERE state = :state AND month >= DATE_FORMAT(DATE_SUB(CURDATE(), INTERVAL 11 MONTH), '%Y-%m')
+      */
+      WHERE state = :state AND month >= TO_CHAR(CURRENT_DATE - INTERVAL '11 months', 'YYYY-MM')
       ORDER BY month ASC
       `,
       {

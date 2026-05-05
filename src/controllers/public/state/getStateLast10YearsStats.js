@@ -17,7 +17,10 @@ export const getStateLast10YearsStats = async (req, res) => {
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
       FROM yearly_stats_by_state
+      /* MYSQL:
       WHERE state = :state AND year >= YEAR(CURDATE()) - 9
+      */
+      WHERE state = :state AND year >= EXTRACT(YEAR FROM CURRENT_DATE) - 9
       ORDER BY year ASC
       `,
       {

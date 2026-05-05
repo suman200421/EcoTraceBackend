@@ -15,7 +15,7 @@ export const getLast7DaysStats = async (req, res) => {
         total_carbon_kg as carbon_kg,
         user_count
       FROM global_daily_stats
-      WHERE date >= CURRENT_DATE - INTERVAL 6 DAY
+      WHERE date >= CURRENT_DATE - INTERVAL '6 days'
       ORDER BY date ASC
       `,
       { type: QueryTypes.SELECT }

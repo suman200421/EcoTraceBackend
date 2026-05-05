@@ -19,7 +19,10 @@ export const getLast7WeeksStats = async (req, res) => {
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
       FROM weekly_stats
+      /* MYSQL:
       WHERE week_start >= DATE_SUB(CURDATE(), INTERVAL 6 WEEK)
+      */
+      WHERE week_start >= CURRENT_DATE - INTERVAL '6 weeks'
       ORDER BY week_start ASC
       `,
       { type: QueryTypes.SELECT }

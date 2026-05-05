@@ -269,11 +269,19 @@ export const ingestVehicleRecords = async (req, res) => {
           INSERT INTO daily_vehicle_stats
             (id, user_id, date, vehicle_type, distance_km, carbon_kg, trip_count, state, created_at, updated_at)
           VALUES ${placeholders}
+          /* MYSQL:
           ON DUPLICATE KEY UPDATE
             distance_km = distance_km + VALUES(distance_km),
             carbon_kg = carbon_kg + VALUES(carbon_kg),
             trip_count = trip_count + VALUES(trip_count),
             state = VALUES(state),
+            updated_at = NOW()
+          */
+          ON CONFLICT (user_id, date, vehicle_type) DO UPDATE SET
+            distance_km = daily_vehicle_stats.distance_km + EXCLUDED.distance_km,
+            carbon_kg = daily_vehicle_stats.carbon_kg + EXCLUDED.carbon_kg,
+            trip_count = daily_vehicle_stats.trip_count + EXCLUDED.trip_count,
+            state = EXCLUDED.state,
             updated_at = NOW()
         `,
         {
@@ -295,10 +303,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO global_daily_stats (date, total_distance_km, total_carbon_kg, user_count)
             VALUES ${dailyPlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (date) DO UPDATE SET
+              total_distance_km = global_daily_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = global_daily_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = global_daily_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: dailyReplacements, transaction }
         );
@@ -317,10 +331,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO weekly_stats (week_start, total_distance_km, total_carbon_kg, user_count)
             VALUES ${weeklyPlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (week_start) DO UPDATE SET
+              total_distance_km = weekly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = weekly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = weekly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: weeklyReplacements, transaction }
         );
@@ -339,10 +359,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO monthly_stats (month, total_distance_km, total_carbon_kg, user_count)
             VALUES ${monthlyPlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (month) DO UPDATE SET
+              total_distance_km = monthly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = monthly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = monthly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: monthlyReplacements, transaction }
         );
@@ -361,10 +387,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO yearly_stats (year, total_distance_km, total_carbon_kg, user_count)
             VALUES ${yearlyPlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (year) DO UPDATE SET
+              total_distance_km = yearly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = yearly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = yearly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: yearlyReplacements, transaction }
         );
@@ -383,10 +415,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO global_daily_stats_by_state (date, state, total_distance_km, total_carbon_kg, user_count)
             VALUES ${dailyStatePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (date, state) DO UPDATE SET
+              total_distance_km = global_daily_stats_by_state.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = global_daily_stats_by_state.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = global_daily_stats_by_state.user_count + EXCLUDED.user_count
           `,
           { replacements: dailyStateReplacements, transaction }
         );
@@ -405,9 +443,14 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO weekly_stats_by_state (week_start, state, total_distance_km, total_carbon_kg)
             VALUES ${weeklyStatePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+            */
+            ON CONFLICT (week_start, state) DO UPDATE SET
+              total_distance_km = weekly_stats_by_state.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = weekly_stats_by_state.total_carbon_kg + EXCLUDED.total_carbon_kg
           `,
           { replacements: weeklyStateReplacements, transaction }
         );
@@ -426,9 +469,14 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO monthly_stats_by_state (month, state, total_distance_km, total_carbon_kg)
             VALUES ${monthlyStatePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+            */
+            ON CONFLICT (month, state) DO UPDATE SET
+              total_distance_km = monthly_stats_by_state.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = monthly_stats_by_state.total_carbon_kg + EXCLUDED.total_carbon_kg
           `,
           { replacements: monthlyStateReplacements, transaction }
         );
@@ -447,9 +495,14 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO yearly_stats_by_state (year, state, total_distance_km, total_carbon_kg)
             VALUES ${yearlyStatePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg)
+            */
+            ON CONFLICT (year, state) DO UPDATE SET
+              total_distance_km = yearly_stats_by_state.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = yearly_stats_by_state.total_carbon_kg + EXCLUDED.total_carbon_kg
           `,
           { replacements: yearlyStateReplacements, transaction }
         );
@@ -468,10 +521,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO vehicle_daily_stats (date, vehicle_type, total_distance_km, total_carbon_kg, user_count)
             VALUES ${dailyVehiclePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (date, vehicle_type) DO UPDATE SET
+              total_distance_km = vehicle_daily_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = vehicle_daily_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = vehicle_daily_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: dailyVehicleReplacements, transaction }
         );
@@ -490,10 +549,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO vehicle_weekly_stats (week_start, vehicle_type, total_distance_km, total_carbon_kg, user_count)
             VALUES ${weeklyVehiclePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (week_start, vehicle_type) DO UPDATE SET
+              total_distance_km = vehicle_weekly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = vehicle_weekly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = vehicle_weekly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: weeklyVehicleReplacements, transaction }
         );
@@ -512,10 +577,16 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO vehicle_monthly_stats (month, vehicle_type, total_distance_km, total_carbon_kg, user_count)
             VALUES ${monthlyVehiclePlaceholders}
+            /* MYSQL:
             ON DUPLICATE KEY UPDATE
               total_distance_km = total_distance_km + VALUES(total_distance_km),
               total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
               user_count = user_count + VALUES(user_count)
+            */
+            ON CONFLICT (month, vehicle_type) DO UPDATE SET
+              total_distance_km = vehicle_monthly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = vehicle_monthly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = vehicle_monthly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: monthlyVehicleReplacements, transaction }
         );
@@ -534,10 +605,10 @@ export const ingestVehicleRecords = async (req, res) => {
           `
             INSERT INTO vehicle_yearly_stats (year, vehicle_type, total_distance_km, total_carbon_kg, user_count)
             VALUES ${yearlyVehiclePlaceholders}
-            ON DUPLICATE KEY UPDATE
-              total_distance_km = total_distance_km + VALUES(total_distance_km),
-              total_carbon_kg = total_carbon_kg + VALUES(total_carbon_kg),
-              user_count = user_count + VALUES(user_count)
+            ON CONFLICT (year, vehicle_type) DO UPDATE SET
+              total_distance_km = vehicle_yearly_stats.total_distance_km + EXCLUDED.total_distance_km,
+              total_carbon_kg = vehicle_yearly_stats.total_carbon_kg + EXCLUDED.total_carbon_kg,
+              user_count = vehicle_yearly_stats.user_count + EXCLUDED.user_count
           `,
           { replacements: yearlyVehicleReplacements, transaction }
         );
