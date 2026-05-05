@@ -28,7 +28,7 @@ export const getSummaryStats = async (req, res) => {
         { replacements: { year: yearNum }, type: QueryTypes.SELECT }
       ),
       sequelize.query(
-        `SELECT SUM(total_distance_km) as total_distance_km, SUM(total_carbon_kg) as total_carbon_kg, SUM(user_count) as user_count FROM yearly_stats`,
+        `SELECT SUM(total_distance_km) as total_distance_km, SUM(total_carbon_kg) as total_carbon_kg, (SELECT COUNT(*) FROM users) as user_count FROM yearly_stats`,
         { type: QueryTypes.SELECT }
       )
     ]);
