@@ -11,7 +11,7 @@ export const getStateStatsToday = async (req, res) => {
         total_distance_km as distance_km,
         total_carbon_kg as carbon_kg
       FROM global_daily_stats_by_state
-      WHERE date = CURRENT_DATE()
+      WHERE date = CURRENT_DATE
       ORDER BY total_carbon_kg DESC
       `,
       { type: QueryTypes.SELECT }
