@@ -105,35 +105,38 @@ const reverseGeocodeState = async (lat, lng, { retryCount = 1 } = {}) => {
     const timeout = setTimeout(() => controller.abort(), NOMINATIM_TIMEOUT_MS);
 
     try {
+      console.log("Fetching geocode from:", url);
       const response = await fetch(url, {
         headers: {
-          "User-Agent": "authBackend/1.0"
+          "User-Agent": "EcoTraceBackend/1.0"
         },
         signal: controller.signal
       });
 
       if (!response.ok) {
+        console.error(`Reverse geocode failed with status ${response.status}`);
         if (response.status >= 500 && attempt < retryCount) {
           attempt += 1;
           continue;
         }
-        console.warn(`Reverse geocode failed with status ${response.status}`);
         return null;
       }
 
       const data = await response.json();
-      const state =
-        typeof data?.address?.state === "string" && data.address.state.trim()
-          ? data.address.state.trim()
-          : null;
-      stateCache.set(cacheKey, state);
-      return state;
+      console.log("Geocode data received:", JSON.stringify(data.address));
+      
+      const addr = data?.address || {};
+      const state = addr.state || addr.city || addr.state_district || addr.province || null;
+      
+      const finalizedState = typeof state === "string" && state.trim() ? state.trim() : null;
+      stateCache.set(cacheKey, finalizedState);
+      return finalizedState;
     } catch (err) {
+      console.error("Reverse geocode error:", err.message);
       if (attempt < retryCount) {
         attempt += 1;
         continue;
       }
-      console.warn("Reverse geocode network failure:", err?.message || err);
       return null;
     } finally {
       clearTimeout(timeout);
@@ -218,9 +221,11 @@ export const detectBatchState = async (records) => {
   const points = getRepresentativePoints(records);
   if (points.length === 0) return null;
 
-  const states = await Promise.all(
-    points.map((point) => reverseGeocodeState(point.lat, point.lng))
-  );
+  const states = [];
+  for (const point of points) {
+    const state = await reverseGeocodeState(point.lat, point.lng);
+    states.push(state);
+  }
 
   return pickMajorityState(states);
 };

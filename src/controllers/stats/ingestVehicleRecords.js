@@ -24,6 +24,7 @@ export const ingestVehicleRecords = async (req, res) => {
 
   try {
     const batchState = await detectBatchState(records);
+    console.log("Resolved batchState:", batchState);
     if (!batchState) {
       console.warn("Unable to resolve state for vehicle records batch");
     }
@@ -33,6 +34,8 @@ export const ingestVehicleRecords = async (req, res) => {
     if (groupedValues.length === 0) {
       return res.json({ success: true, processed: 0 });
     }
+
+    console.log("Ingesting for user:", req.userId, "Dates count:", groupedValues.length);
 
     const placeholders = groupedValues
       .map(() => "(?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())")
