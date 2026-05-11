@@ -1,3 +1,4 @@
+import admin from "../../config/firebaseAdmin.js";
 import bcrypt from "bcrypt";
 import User from "../../models/User.js";
 import {
@@ -25,10 +26,29 @@ export const login = async (req, res) => {
     const accessToken = generateAccessToken(user.id, user.tokenVersion);
     const refreshToken = generateRefreshToken(user.id, user.tokenVersion);
 
+    // --- Generate Firebase Custom Token ---
+    let firebaseToken = null;
+    try {
+      firebaseToken = await admin.auth().createCustomToken(user.id.toString());
+    } catch (tokenErr) {
+      console.error("Failed to generate Firebase Custom Token:", tokenErr.message);
+    }
+
     user.refreshToken = refreshToken;
     await user.save();
 
-    res.json({ accessToken, refreshToken });
+    res.json({
+      accessToken,
+      refreshToken,
+      firebaseToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        avatar: user.avatar
+      }
+    });
   } catch (err) {
     res.status(500).json({ message: "Server error" });
   }

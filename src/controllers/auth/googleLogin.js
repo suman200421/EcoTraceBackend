@@ -4,8 +4,14 @@ import {
   generateAccessToken,
   generateRefreshToken
 } from "../../utils/token.js";
+import dotenv from "dotenv";
+
+dotenv.config();
+
+
 
 const splitDisplayName = (name = "") => {
+  if (!name) return { firstName: "", lastName: "" };
   const [firstName = "", ...lastNameParts] = name.trim().split(/\s+/);
 
   return {
@@ -16,8 +22,8 @@ const splitDisplayName = (name = "") => {
 
 /**
  * POST /auth/google
- * Login through Firebase Auth.
- * The frontend signs in with Firebase, then sends the Firebase ID token here.
+ * Login through Google OAuth.
+ * The frontend signs in with Google and sends the ID token here.
  */
 export const googleLogin = async (req, res) => {
   try {
@@ -25,7 +31,7 @@ export const googleLogin = async (req, res) => {
 
     // --- Validate request ---
     if (!idToken) {
-      return res.status(400).json({ message: "Firebase ID token is required" });
+      return res.status(400).json({ message: "Google ID token is required" });
     }
 
     // --- Verify token with Firebase Admin ---
@@ -33,40 +39,39 @@ export const googleLogin = async (req, res) => {
     try {
       decodedToken = await admin.auth().verifyIdToken(idToken);
     } catch (verifyErr) {
+      console.error("Firebase token verification failed:", verifyErr.message);
       return res.status(401).json({ message: "Invalid Firebase ID token" });
     }
 
-    const email = decodedToken.email;
+    const { email, name, picture, uid } = decodedToken;
 
     if (!email) {
-      return res.status(401).json({ message: "Firebase account has no email" });
+      return res.status(401).json({ message: "Firebase token has no email" });
     }
 
-    const signInProvider = decodedToken.firebase?.sign_in_provider || "firebase";
-    const providerIds = decodedToken.firebase?.identities?.["google.com"] || [];
-    const providerId = providerIds[0] || decodedToken.uid;
-    const { firstName, lastName } = splitDisplayName(decodedToken.name);
+    const providerId = uid; // Firebase's unique ID for the user
+    const { firstName, lastName } = splitDisplayName(name);
 
     // --- Find or create user ---
     let user = await User.findOne({ where: { email } });
 
     if (!user) {
-      // New user - create with Firebase Google profile
+      // New user - create with Google profile
       user = await User.create({
         email,
         firstName,
         lastName,
         password: null,
-        provider: signInProvider,
+        provider: "google.com",
         providerId,
-        avatar: decodedToken.picture || null
+        avatar: picture || null
       });
     } else if (!user.providerId) {
-      // Existing user without a Firebase-linked provider - link account
-      user.provider = signInProvider;
+      // Existing user without a linked provider - link account
+      user.provider = "google.com";
       user.providerId = providerId;
-      if (decodedToken.picture && !user.avatar) {
-        user.avatar = decodedToken.picture;
+      if (picture && !user.avatar) {
+        user.avatar = picture;
       }
       await user.save();
     }
