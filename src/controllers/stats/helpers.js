@@ -124,10 +124,10 @@ const reverseGeocodeState = async (lat, lng, { retryCount = 1 } = {}) => {
 
       const data = await response.json();
       console.log("Geocode data received:", JSON.stringify(data.address));
-      
+
       const addr = data?.address || {};
       const state = addr.state || addr.city || addr.state_district || addr.province || null;
-      
+
       const finalizedState = typeof state === "string" && state.trim() ? state.trim() : null;
       stateCache.set(cacheKey, finalizedState);
       return finalizedState;

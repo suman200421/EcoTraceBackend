@@ -242,7 +242,7 @@ router.post("/logout", logout);
  * @swagger
  * /api/auth/google:
  *   post:
- *     summary: Login or register with Google ID token
+ *     summary: Login or register with Firebase Google ID token
  *     tags: [Auth]
  *     requestBody:
  *       required: true
@@ -251,11 +251,11 @@ router.post("/logout", logout);
  *           schema:
  *             type: object
  *             required:
- *               - token
+ *               - idToken
  *             properties:
- *               token:
+ *               idToken:
  *                 type: string
- *                 description: Google ID token from frontend
+ *                 description: Firebase ID token from the frontend after Google sign-in
  *     responses:
  *       200:
  *         description: Login successful
