@@ -12,6 +12,10 @@ const GOOGLE_CLIENT_ID = process.env.GOOGLE_WEB_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
 const APP_SCHEME = "ecotrace";
 
+function hasGoogleWebConfig() {
+  return Boolean(GOOGLE_CLIENT_ID && GOOGLE_CLIENT_SECRET);
+}
+
 /**
  * Build the backend callback URL dynamically from the incoming request.
  */
@@ -26,6 +30,10 @@ function getCallbackUrl(req) {
  * Redirects the user's browser to Google's consent screen.
  */
 export const googleRedirect = (req, res) => {
+  if (!hasGoogleWebConfig()) {
+    return res.status(500).send("Google web OAuth is not configured");
+  }
+
   const callbackUrl = getCallbackUrl(req);
   const client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, callbackUrl);
 
@@ -53,6 +61,12 @@ export const googleCallback = async (req, res) => {
   }
 
   try {
+    if (!hasGoogleWebConfig()) {
+      return res.redirect(
+        APP_SCHEME + "://auth-callback?error=" + encodeURIComponent("Google web OAuth is not configured")
+      );
+    }
+
     const callbackUrl = getCallbackUrl(req);
     const client = new OAuth2Client(GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, callbackUrl);
 

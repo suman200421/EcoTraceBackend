@@ -8,7 +8,9 @@ import {
   verifyOtp,
   forgotPassword,
   resetPassword,
-  googleLogin
+  googleLogin,
+  googleRedirect,
+  googleCallback
 } from "../controllers/auth.controller.js";
 
 const router = express.Router();
@@ -278,5 +280,7 @@ router.post("/logout", logout);
  *         description: Server error
  */
 router.post("/google", googleLogin);
+router.get("/google/login", googleRedirect);
+router.get("/google/callback", googleCallback);
 
 export default router;
