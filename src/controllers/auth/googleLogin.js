@@ -16,7 +16,8 @@ const splitDisplayName = (name = "") => {
 
 /**
  * POST /auth/google
- * Google OAuth login through Firebase Auth.
+ * Login through Firebase Auth.
+ * The frontend signs in with Firebase, then sends the Firebase ID token here.
  */
 export const googleLogin = async (req, res) => {
   try {
@@ -41,6 +42,7 @@ export const googleLogin = async (req, res) => {
       return res.status(401).json({ message: "Firebase account has no email" });
     }
 
+    const signInProvider = decodedToken.firebase?.sign_in_provider || "firebase";
     const providerIds = decodedToken.firebase?.identities?.["google.com"] || [];
     const providerId = providerIds[0] || decodedToken.uid;
     const { firstName, lastName } = splitDisplayName(decodedToken.name);
@@ -55,13 +57,13 @@ export const googleLogin = async (req, res) => {
         firstName,
         lastName,
         password: null,
-        provider: "google",
+        provider: signInProvider,
         providerId,
         avatar: decodedToken.picture || null
       });
     } else if (!user.providerId) {
-      // Existing user without Google linked - link account
-      user.provider = "google";
+      // Existing user without a Firebase-linked provider - link account
+      user.provider = signInProvider;
       user.providerId = providerId;
       if (decodedToken.picture && !user.avatar) {
         user.avatar = decodedToken.picture;
